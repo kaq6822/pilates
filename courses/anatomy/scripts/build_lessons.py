@@ -89,7 +89,7 @@ for key,d in DATA.items():
     movement+='<div class="subsection">'+card('용어 이해','<div class="term-grid">'+''.join(f'<div class="term-card"><b>{a}</b><p>{b}</p></div>' for a,b in d['glossary'])+'</div>')+'</div>'
     pilates=card('필라테스 적용',md(sections[8]))+'<div class="subsection"><h2>동작별 목적과 수정</h2>'+exercises(d)+'</div>'
     pilates+='<div class="termnote subsection"><b>가동범위와 레버 길이</b><br>가동범위는 실제 움직인 범위이며, 레버 길이는 회전축과 부하 사이의 역학적 거리와 관련됩니다. 범위를 줄이는 것과 레버를 짧게 하는 것은 다른 수정입니다.</div>'
-    quiz='<div class="quiz-instructions"><div><h2>퀴즈 · 10문항</h2><p>답을 선택하고 정답·해설을 확인하세요. 선택과 결과는 저장되지 않습니다.</p></div><span class="score">즉시 학습 확인</span></div>'+quizzes(d)
+    quiz='<div class="quiz-instructions"><div><h2>퀴즈 · 10문항</h2><p>보기를 선택하면 정답 여부와 해설이 바로 표시됩니다. 선택과 결과는 저장되지 않습니다.</p></div><span class="score">즉시 정답 확인</span></div>'+quizzes(d)
     panes={'overview':overview,'anatomy':anatomy,'movement':movement,'pilates':pilates,'quiz':quiz}
     labels=['주요 이해','해부학 상세','움직임과 기능','필라테스 적용','퀴즈 (10문항)']
     radios=''.join(f'<input class="tab-radio" type="radio" name="section-tab" id="tab-{x}" aria-label="{label}"'+(' checked' if x=='overview' else '')+'>' for x,label in zip(panes,labels))

@@ -13,9 +13,16 @@ document.querySelectorAll('.quiz-item[data-answer]').forEach(item => {
   item.addEventListener('change', event => {
     if (!event.target.matches('input[type="radio"]')) return;
     const correct = event.target.value === item.dataset.answer;
+    item.querySelectorAll('.opt-radio').forEach(label => {
+      const value = label.querySelector('input').value;
+      label.classList.toggle('correct', value === item.dataset.answer);
+      label.classList.toggle('wrong', value === event.target.value && !correct);
+    });
     const feedback = item.querySelector('.quiz-feedback');
-    feedback.textContent = correct ? '정답입니다. 해설에서 이유를 확인해 보세요.' : '다시 생각해 보세요. 정답·해설을 열어 확인할 수 있습니다.';
+    feedback.textContent = correct ? '정답입니다.' : '오답입니다. 초록색 보기가 정답입니다.';
     feedback.dataset.correct = String(correct);
+    const reveal = item.querySelector('.answer-reveal');
+    if (reveal) reveal.open = true;
   });
 });
 

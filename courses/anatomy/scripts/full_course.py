@@ -1,4 +1,6 @@
 """Compile the complete source collection; keep editorial examples intact."""
+import json
+import random
 import re
 import html
 from collections import defaultdict
@@ -38,17 +40,28 @@ def build_course(root, md, inline, card):
             matches=[d for d in lessons if name in (d['name_ko'],d['name_ko_alias'])]
             out.append(f'<a href="{matches[0]["file"]}">{E(name)}</a>' if matches else f'<span>{E(name)}</span>')
         return '<div class="related-links">'+''.join(out)+'</div>'
-    def quiz(s):
-        questions,answers=s.split('<details>',1)
-        qs=re.findall(r'^(\d+)\. (.+)$',questions,re.M)
-        ans=dict(re.findall(r'^(\d+)\. (.+)$',answers,re.M))
-        assert len(qs)==10 and len(ans)==10
-        out='<div class="quiz-instructions"><div><h2>퀴즈 · 10문항</h2><p>답을 떠올리거나 작성한 뒤 모범 답안과 비교하세요. 작성 내용은 저장되지 않습니다.</p></div><span class="score">학습 확인</span></div>'
-        for n,q in qs:
-            q=q.replace('[위치 선택 · 기본]','[부착점 회상 · 기본]').replace('그림에서 ', '').replace('을 선택하시오.','을 설명하시오.')
-            a=ans[n].replace('Section 4와 Section 7','움직임과 기능 탭의 주요 작용과 기능적 해석')
-            out+=f'<article class="quiz-item"><h3 id="question-{n}">{n}. {inline(q)}</h3><textarea rows="3" aria-labelledby="question-{n}" placeholder="나의 답을 적어 보세요"></textarea><details class="answer-reveal"><summary>정답·해설 보기</summary><div class="answer-body">{inline(a)}</div></details></article>'
-        return out
+    def quiz(d):
+        # Multiple-choice data lives beside the source; the source's written quiz stays untouched.
+        data=json.loads((root/f'content/quiz_choices/{d["id"]}.json').read_text())
+        items=data['questions']
+        assert data['id']==d['id'] and len(items)==10, d['id']
+        # Spread correct positions evenly across A–D, reproducibly per lesson.
+        rng=random.Random(d['id'])
+        slots=[0,1,2,3]*3;rng.shuffle(slots)
+        out='<div class="quiz-instructions"><div><h2>퀴즈 · 10문항</h2><p>보기를 선택하면 정답 여부와 해설이 바로 표시됩니다. 선택과 결과는 저장되지 않습니다.</p></div><span class="score">즉시 정답 확인</span></div><div class="quiz-list">'
+        for n,item in enumerate(items,1):
+            answer,wrong=item['answer'],item['distractors']
+            assert answer not in wrong and len(set(wrong))==len(wrong), (d['id'],n)
+            if {answer,*wrong}=={'참','거짓'}:
+                options=['참','거짓']
+            else:
+                assert len(wrong)==3, (d['id'],n)
+                options=wrong[:];options.insert(slots.pop(),answer)
+            key=options.index(answer)
+            opts=''.join(f'<label class="opt-radio"><input type="radio" name="q{n}" value="{j}"><span>{E(o)}</span></label>' for j,o in enumerate(options))
+            term=f'<div class="termnote"><b>용어 설명:</b> {E(item["term"])}</div>' if item.get('term') else ''
+            out+=f'<div class="quiz-item" data-answer="{key}"><fieldset><legend>{n}. {E(item["q"])}</legend>{term}<div class="opts">{opts}</div><p class="quiz-feedback" aria-live="polite"></p><details class="answer-reveal"><summary>정답·해설 보기</summary><div class="answer-body"><b>정답: {E(answer)}</b><p>{E(item["explanation"])}</p></div></details></fieldset></div>'
+        return out+'</div>'
     for i,d in enumerate(lessons):
         p=root/d['file'];s=d['sections']
         if d['id'] not in ('M001','M002','M003'):
@@ -56,7 +69,7 @@ def build_course(root, md, inline, card):
             overview=f'<div class="memory-card"><div class="eyebrow">한 줄 기억</div><strong>{inline(memory)}</strong></div><div class="dashboard subsection"><figure class="lesson-hero">{placeholder(d["name_ko"]+" 위치도")}<figcaption>{E(title(d))} · {E(d["name_en"])}</figcaption></figure><div class="right-col">'+card('어디에 있는 근육인가',md(s[1]))+card('주요 작용',md(s[4]))+'</div></div><div class="detail-layout subsection">'+card('기시 · 정지',md(s[2]))+card('신경지배',md(s[3]))+'</div><div class="subsection">'+card('일상 움직임',md(s[5]))+'</div>'
             anatomy='<div class="detail-layout">'+card('위치와 부착점',md(s[1]+ '\n\n'+s[2]))+card('신경지배와 위치 확인',md(s[3])+ '<h3>촉진 및 위치 확인</h3>'+md(s[6]))+'</div><div class="subsection">'+card('함께 보면 좋은 근육',related(s[9]))+'</div>'
             movement='<div class="detail-layout">'+card('주요 작용',md(s[4]))+card('일상 움직임',md(s[5]))+'</div><div class="subsection">'+card('기능적 해석 — 단정하지 말아야 할 점',md(s[7]))+'</div>'
-            panes=[overview,anatomy,movement,card('필라테스 적용',md(s[8])),quiz(s[11])]
+            panes=[overview,anatomy,movement,card('필라테스 적용',md(s[8])),quiz(d)]
             radios=''.join(f'<input class="tab-radio" type="radio" name="section-tab" id="tab-{key}" aria-label="{label}"'+(' checked' if key=='overview' else '')+'>' for key,label in TABS)
             tabs=''.join(f'<label class="tab" for="tab-{key}">{label}</label>' for key,label in TABS)
             body=''.join(f'<section class="pane" id="{key}" aria-label="{label}">{body}</section>' for (key,label),body in zip(TABS,panes))

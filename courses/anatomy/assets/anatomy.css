@@ -77,3 +77,4 @@ button,input{font:inherit}.app{min-height:100vh;display:grid;grid-template-colum
 
 @media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.muscle-browser[open] .search,.muscle-browser[open] .side-title{display:block}.muscle-browser[open] .muscle{display:flex}.muscle-browser #muscle-list{max-height:45vh;overflow:auto}.catalog{padding:16px 14px 48px}.catalog-hero{padding:30px 24px}.catalog-grid{grid-template-columns:1fr}.catalog-group h2{font-size:21px}.image-placeholder{min-height:100px}.title-row h1{overflow-wrap:anywhere}}
+.quiz-item .opt-radio.correct{border-color:#28a26d;background:#eaf8f1}.quiz-item .opt-radio.wrong{border-color:#d95757;background:#fff0f0}.quiz-feedback{font-weight:800}.quiz-feedback[data-correct="false"]{color:#b23b3b}
